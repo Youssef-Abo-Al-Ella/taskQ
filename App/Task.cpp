@@ -119,3 +119,93 @@ std::vector<Task> Task::readFromDisk()
     file.close();
     return tasks;
 }
+void Task::removeFromDisk(const std::string& taskName) {
+    std::ifstream file("persistent_tasks.txt");
+    std::ofstream tempFile("temp_tasks.txt");
+
+    if (!file || !tempFile) {
+        std::cerr << "Error: Could not open the file for reading or writing.\n";
+        return;
+    }
+
+    std::string line;
+    bool skip = false;
+
+    while (std::getline(file, line)) {
+        // Check if the line contains the task name
+        if (line.find("Task Name:") != std::string::npos) {
+            // Extract the task name from the line
+            size_t start = line.find(":") + 2;
+            size_t end = line.find(",");
+            std::string currentTaskName = line.substr(start, end - start);
+
+            // If this is the task to remove, skip writing this block to the temp file
+            if (currentTaskName == taskName) {
+                skip = true;
+            }
+        }
+
+        // Write the current line to the temp file unless we are skipping
+        if (!skip) {
+            tempFile << line << "\n";
+        }
+
+        // If the end of a task object is reached, stop skipping
+        if (line.find("}") != std::string::npos) {
+            skip = false;
+        }
+    }
+
+    file.close();
+    tempFile.close();
+
+    // Replace the original file with the temp file
+    std::remove("persistent_tasks.txt");
+    std::rename("temp_tasks.txt", "persistent_tasks.txt");
+
+}
+std::string Task::toString() {
+    std::ostringstream oss;
+
+    // Format the task details
+    oss << "Task Details:\n";
+    oss << "Name: " << name << "\n";
+    oss << "Important: " << (important ? "Yes" : "No") << "\n";
+    oss << "Urgent: " << (urgent ? "Yes" : "No") << "\n";
+    oss << "Date: " << getFormatedDate() << "\n";
+    oss << "Time Spent: " << timeSpent << " minutes\n";
+    oss << "Continuous: " << (continuous ? "Yes" : "No") << "\n";
+    oss << "Switchable: " << (switchable ? "Yes" : "No") << "\n";
+
+    return oss.str();
+}
+
+bool Task::checkExists(std::string name)
+{
+    std::ifstream file("persistent_tasks.txt");
+
+    if (!file) {
+        std::cerr << "Error: Could not open the file for reading.\n";
+        return false;
+    }
+
+    std::string line;
+
+    while (std::getline(file, line)) {
+        // Look for a line with "Task Name: " and check if the task name matches
+        if (line.find("Task Name: ") != std::string::npos) {
+            size_t start = line.find(":") + 2; // Find the start of the task name
+            size_t end = line.find(",", start); // Find the end of the task name
+            std::string currentTaskName = line.substr(start, end - start);
+
+            // Compare the current task name with the given task name
+            if (currentTaskName == name) {
+                file.close();
+                return true;
+            }
+        }
+    }
+
+    file.close();
+    return false;
+}

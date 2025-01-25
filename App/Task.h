@@ -76,6 +76,9 @@ public:
     Task(std::string tname);
     std::string getFormatedDate();
     void wirteToDisk();
-    std::vector<Task> readFromDisk();
+    static std::vector<Task> readFromDisk();
+    static void removeFromDisk(const std::string& taskName);
+    std::string toString();
+    static bool checkExists(std::string name);
 };
 
